@@ -1,0 +1,7 @@
+{
+  "default": [
+    { "label": "当天回访确认客户状态", "dueInDays": 0 },
+    { "label": "3天内确认资料是否齐全", "dueInDays": 3 },
+    { "label": "7天内跟进医生建议执行情况", "dueInDays": 7 }
+  ]
+}

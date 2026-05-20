@@ -26,6 +26,53 @@ export default function App() {
   const [manualCopyText, setManualCopyText] = useState('');
   const [scriptTone, setScriptTone] = useState('balanced');
 
+  const [workflowStatus, setWorkflowStatus] = useState('idle');
+  const [workflowResult, setWorkflowResult] = useState(null);
+  const [savedCase, setSavedCase] = useState(null);
+  const [savedCases, setSavedCases] = useState([]);
+
+
+  useEffect(() => {
+    setSavedCases(listSavedCases());
+  }, []);
+
+  async function handleGenerateWorkflow() {
+    setWorkflowStatus('loading');
+    try {
+      const result = await analyzeCase({ client, inputText: client.note, scriptText });
+      setWorkflowResult(result);
+      setWorkflowStatus('success');
+    } catch (error) {
+      setWorkflowStatus('error');
+    }
+  }
+
+  async function handleSaveCase() {
+    if (!workflowResult) return;
+    const saved = await saveCase({ client, workflowResult, scriptText });
+    setSavedCase(saved);
+    setSavedCases(listSavedCases());
+  }
+
+
+  function handleLoadCase(item) {
+    if (!item) return;
+    setClient(item.client || client);
+    setWorkflowResult(item.workflowResult || null);
+    setSavedCase({ caseId: item.caseId, savedAt: item.savedAt });
+  }
+
+
+  function handleFollowupStatusChange(label, status) {
+    if (!savedCase?.caseId) return;
+    const updated = updateFollowupStatus(savedCase.caseId, label, status);
+    setSavedCases(updated);
+    const current = updated.find((item) => item.caseId === savedCase.caseId);
+    if (current?.workflowResult) {
+      setWorkflowResult(current.workflowResult);
+    }
+  }
+
   const plan = useMemo(() => getEventPlan(client), [client]);
   const scriptText = useMemo(() => generateScript(client, plan, scriptTone), [client, plan, scriptTone]);
   const Icon = iconMap[plan.iconKey] || FileText;
@@ -84,6 +131,15 @@ export default function App() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-12">
+        <div className="mb-5 grid gap-5 lg:grid-cols-2">
+          <SummaryPanel summary={workflowResult?.summary} onManualCopy={setManualCopyText} />
+          <ProblemPanel problems={workflowResult?.problems || []} onManualCopy={setManualCopyText} />
+          <TriagePanel triage={workflowResult?.triage} onManualCopy={setManualCopyText} />
+          <PathPanel paths={workflowResult?.paths || []} onManualCopy={setManualCopyText} />
+          <InsurancePanel insurance={workflowResult?.insurance} onManualCopy={setManualCopyText} />
+          <CaseFollowupPanel followups={workflowResult?.followups || []} savedCase={savedCase} onManualCopy={setManualCopyText} onStatusChange={handleFollowupStatusChange} />
+          <CaseHistoryPanel cases={savedCases} onLoadCase={handleLoadCase} />
+        </div>
         <div className="grid gap-5 lg:grid-cols-4">
           <OutputCard icon={CheckCircle2} title="顾问下一步动作" footer={<CopyButton text={actionText} label="复制动作清单" onManualCopy={setManualCopyText} />}><BulletList items={plan.nextActions} /></OutputCard>
           <OutputCard icon={ClipboardList} title="需要客户提供" footer={<CopyButton text={checklistText} label="复制资料清单" onManualCopy={setManualCopyText} />}><div className="flex flex-wrap gap-2">{plan.checklist.map((item) => <Badge key={item} variant="outline">{item}</Badge>)}</div></OutputCard>
