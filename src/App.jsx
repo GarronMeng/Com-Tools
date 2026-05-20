@@ -1,18 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarClock, CheckCircle2, ClipboardList, FileText, WalletCards } from 'lucide-react';
 import { generateScript, getEventPlan, toneOptions } from './logic.js';
-import { analyzeCase, listSavedCases, saveCase } from './mock/workflowService.js';
-import { updateFollowupStatus } from './mock/caseStore.js';
 import ClientInfoForm from './components/ClientInfoForm.jsx';
 import ManualCopyPanel from './components/ManualCopyPanel.jsx';
 import OutputCard from './components/OutputCard.jsx';
 import ScenarioPicker from './components/ScenarioPicker.jsx';
 import ScriptPanel from './components/ScriptPanel.jsx';
-import { Badge, BulletList, Button, Card, CardContent, CopyButton } from './components/ui.jsx';
-import { InsurancePanel, PathPanel, ProblemPanel, SummaryPanel, TriagePanel } from './components/WorkflowPanels.jsx';
-import CaseFollowupPanel from './components/CaseFollowupPanel.jsx';
-import CaseHistoryPanel from './components/CaseHistoryPanel.jsx';
+import { Badge, BulletList, Card, CardContent, CopyButton } from './components/ui.jsx';
 
 const iconMap = { CalendarClock, ClipboardList, FileText, WalletCards };
 
@@ -132,16 +127,6 @@ export default function App() {
             scriptText={scriptText}
             onManualCopy={setManualCopyText}
           />
-          <Card className="rounded-[2rem] bg-white">
-            <CardContent className="flex flex-wrap items-center gap-3">
-              <Button onClick={handleGenerateWorkflow} disabled={workflowStatus === 'loading'}>
-                {workflowStatus === 'loading' ? '生成中...' : '生成主线建议'}
-              </Button>
-              <Button variant="outline" onClick={handleSaveCase} disabled={!workflowResult}>保存案例</Button>
-              {savedCase && <Badge variant="secondary">已保存：{savedCase.caseId}</Badge>}
-              {workflowStatus === 'error' && <span className="text-sm text-rose-600">生成失败，请重试。</span>}
-            </CardContent>
-          </Card>
         </div>
       </section>
 
